@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 650" role="img" aria-labelledby="t d">
+  <title id="t">Bridge between technology ecosystems</title><desc id="d">Abstract bridge with nodes representing .NET, Rust, AI and cloud.</desc>
+  <defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="18"/></filter></defs>
+  <rect width="900" height="650" rx="34" fill="#0b1328"/>
+  <circle cx="690" cy="120" r="120" fill="#4456d9" opacity=".24" filter="url(#b)"/>
+  <path d="M80 510 Q450 120 820 510" fill="none" stroke="url(#g)" stroke-width="18" opacity=".9"/>
+  <path d="M80 510 H820" stroke="#8ea6d8" stroke-width="10" opacity=".62"/>
+  <g fill="#eaf0ff" font-family="system-ui" font-weight="700" font-size="28">
+    <circle cx="180" cy="420" r="42" fill="#17244b" stroke="#60a5fa" stroke-width="3"/><text x="154" y="430">.NET</text>
+    <circle cx="450" cy="240" r="42" fill="#17244b" stroke="#a78bfa" stroke-width="3"/><text x="420" y="250">Rust</text>
+    <circle cx="710" cy="420" r="42" fill="#17244b" stroke="#34d399" stroke-width="3"/><text x="692" y="430">AI</text>
+  </g>
+</svg>

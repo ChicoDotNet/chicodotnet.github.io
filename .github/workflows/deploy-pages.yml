@@ -1,0 +1,55 @@
+name: deploy-pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '17 12 * * *'
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Compute release metadata from HEAD
+        id: meta
+        shell: bash
+        run: |
+          COMMIT_DATE=$(git show -s --format=%cI HEAD)
+          echo "date=$(date -u -d "$COMMIT_DATE" +%y%m%d)" >> "$GITHUB_OUTPUT"
+      - name: Generate static content
+        env:
+          RELEASE_DATE_UTC: ${{ steps.meta.outputs.date }}
+          RELEASE_BUILD: ${{ github.run_number }}
+          RELEASE_CHANNEL: release
+        run: dotnet run --project tools/ChicoDotNet.ContentPipeline
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

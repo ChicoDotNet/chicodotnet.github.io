@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.vite/
+*.user
+*.suo
+bin/
+obj/
+public/version.json
+public/generated/
+public/rss.xml
+public/atom.xml
+public/sitemap.xml
+public/llms.txt
+public/content/
