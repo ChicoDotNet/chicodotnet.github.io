@@ -13,9 +13,6 @@ const videos = contentByKind('video');
 const localeStorageKey = 'chicodotnet.locale';
 
 function initialLocale(): Locale {
-  const requested = new URLSearchParams(window.location.search).get('lang');
-  if (isLocale(requested)) return requested;
-
   try {
     const stored = window.localStorage.getItem(localeStorageKey);
     if (isLocale(stored)) return stored;
@@ -73,13 +70,8 @@ export function App() {
     try {
       window.localStorage.setItem(localeStorageKey, locale);
     } catch {
-      // Keep language selection functional even when storage is blocked.
+      // The page stays functional without persistent storage.
     }
-
-    const url = new URL(window.location.href);
-    if (locale === 'es') url.searchParams.delete('lang');
-    else url.searchParams.set('lang', locale);
-    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
   }, [locale]);
 
   return (
