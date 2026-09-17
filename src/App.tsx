@@ -117,18 +117,15 @@ export function App() {
 
           <section className="facts-strip" aria-label="ChicoDotNet facts">
             <div className="container">
-              <div className="row g-0">
-                {t.facts.map((fact, index) => {
-                  const [headline, ...rest] = fact.split(' ');
-                  return (
-                    <div className="col-6 col-lg-3" key={fact}>
-                      <div className={`fact-item ${index > 0 ? 'fact-bordered' : ''}`}>
-                        <strong>{headline}</strong>
-                        <span>{rest.join(' ')}</span>
-                      </div>
+              <div className="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-0">
+                {t.facts.map((fact) => (
+                  <div className="col" key={fact.title}>
+                    <div className="fact-item">
+                      <strong>{fact.title}</strong>
+                      <span>{fact.body}</span>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             </div>
           </section>
