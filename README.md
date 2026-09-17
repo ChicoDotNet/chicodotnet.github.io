@@ -1,5 +1,36 @@
 # ChicoDotNet User Page
 
-Public engineering home for ChicoDotNet.
+Public engineering home for Alfonso Lara Ramos / ChicoDotNet, deployed at `https://chicodotnet.github.io/`.
 
-> Repository bootstrap only. Active development happens on `dev`; releases are squash-promoted to `main`.
+## Stack
+
+- React + strict TypeScript/TSX;
+- Fluent UI 2 (`@fluentui/react-components`) for controls and interaction;
+- Bootstrap for mobile-first responsive layout and spacing;
+- Markdown + Mermaid for repository-native content;
+- .NET 10 content pipeline for generated indices, RSS/Atom, sitemap, `llms.txt`, static long-tail pages and runtime build evidence;
+- GitHub Pages for static hosting.
+
+## Versioning
+
+`version.json` is intentionally tracked and contains only the voluntarily managed `major.minor` line, for example `0.1`.
+
+A deployed artifact expands that base to:
+
+`major.minor.yymmdd.build`
+
+where the date is derived in **UTC** and the build number is generated automatically by the deployment workflow. The expanded evidence is published as `/version.json` and shown in the footer for fast debugging.
+
+## Branch/release philosophy
+
+- `dev` preserves integration history.
+- work is validated on `dev`.
+- `main` represents released product history.
+- releases are promoted from `dev` to `main` as a deliberate squash commit.
+- Git tags/releases may coexist later, but they are not the source of truth for the voluntary `major.minor` line.
+
+## Content
+
+Repository content lives under `content/` and is directly reviewable in pull requests. The current release includes placeholders for articles, diagrams and videos so external ingestion can be added later without coupling the UI to LinkedIn, YouTube or another provider.
+
+See [`docs/ROADMAP.md`](docs/ROADMAP.md) for Visio compatibility, feed ingestion and the reusable multi-cloud contactor.

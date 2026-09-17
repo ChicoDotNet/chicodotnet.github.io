@@ -7,11 +7,32 @@ using System.Xml.Linq;
 var root = FindRoot(Directory.GetCurrentDirectory());
 var contentRoot = Path.Combine(root, "content");
 var publicRoot = Path.Combine(root, "public");
-var versionPath = Path.Combine(root, "version.json");
-var version = JsonSerializer.Deserialize<VersionInfo>(File.ReadAllText(versionPath))
-              ?? throw new InvalidOperationException("version.json is invalid.");
-if (!Regex.IsMatch(version.Version, @"^\d+\.\d+\.\d{6}\.\d{3}$"))
-    throw new InvalidOperationException($"Version '{version.Version}' must use major.minor.yymmdd.build.");
+var baseVersionPath = Path.Combine(root, "version.json");
+
+var baseVersion = JsonSerializer.Deserialize<BaseVersion>(File.ReadAllText(baseVersionPath))
+                  ?? throw new InvalidOperationException("version.json is invalid.");
+if (!Regex.IsMatch(baseVersion.Version, @"^\d+\.\d+$"))
+    throw new InvalidOperationException($"Base version '{baseVersion.Version}' must use major.minor, for example 0.1.");
+
+var nowUtc = DateTimeOffset.UtcNow;
+var dateCode = Environment.GetEnvironmentVariable("RELEASE_DATE_UTC") ?? nowUtc.ToString("yyMMdd");
+if (!Regex.IsMatch(dateCode, @"^\d{6}$"))
+    throw new InvalidOperationException("RELEASE_DATE_UTC must use yyMMdd in UTC.");
+
+var buildText = Environment.GetEnvironmentVariable("RELEASE_BUILD") ?? "0";
+if (!int.TryParse(buildText, out var build) || build < 0)
+    throw new InvalidOperationException("RELEASE_BUILD must be a non-negative integer.");
+
+var channel = Environment.GetEnvironmentVariable("RELEASE_CHANNEL") ?? "dev";
+var commitSha = Environment.GetEnvironmentVariable("GITHUB_SHA");
+var runtime = new RuntimeVersion(
+    $"{baseVersion.Version}.{dateCode}.{build:D3}",
+    baseVersion.Version,
+    dateCode,
+    build,
+    channel,
+    commitSha,
+    nowUtc.ToString("O"));
 
 var items = Directory.EnumerateFiles(contentRoot, "*.md", SearchOption.AllDirectories)
     .Select(ReadItem)
@@ -19,15 +40,15 @@ var items = Directory.EnumerateFiles(contentRoot, "*.md", SearchOption.AllDirect
     .ToArray();
 
 Directory.CreateDirectory(Path.Combine(publicRoot, "generated"));
-File.Copy(versionPath, Path.Combine(publicRoot, "version.json"), true);
 var jsonOptions = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+File.WriteAllText(Path.Combine(publicRoot, "version.json"), JsonSerializer.Serialize(runtime, jsonOptions));
 File.WriteAllText(Path.Combine(publicRoot, "generated", "content-index.json"), JsonSerializer.Serialize(items, jsonOptions));
 File.WriteAllText(Path.Combine(publicRoot, "rss.xml"), BuildRss(items));
 File.WriteAllText(Path.Combine(publicRoot, "atom.xml"), BuildAtom(items));
 File.WriteAllText(Path.Combine(publicRoot, "sitemap.xml"), BuildSitemap(items));
-File.WriteAllText(Path.Combine(publicRoot, "llms.txt"), BuildLlms(items, version));
-WriteStaticContentPages(publicRoot, items, version);
-Console.WriteLine($"Generated {items.Length} content records for v{version.Version}.");
+File.WriteAllText(Path.Combine(publicRoot, "llms.txt"), BuildLlms(items, runtime));
+WriteStaticContentPages(publicRoot, items, runtime);
+Console.WriteLine($"Generated {items.Length} content records for v{runtime.Version} ({runtime.Channel}).");
 
 static string FindRoot(string start)
 {
@@ -37,48 +58,79 @@ static string FindRoot(string start)
         if (File.Exists(Path.Combine(current.FullName, "version.json"))) return current.FullName;
         current = current.Parent;
     }
+
     throw new DirectoryNotFoundException("Repository root not found.");
 }
 
 static ContentRecord ReadItem(string path)
 {
-    var text = File.ReadAllText(path);
-    if (!text.StartsWith("---")) throw new InvalidOperationException($"Missing front matter: {path}");
-    var parts = text.Split(new[] { "\n---\n", "\r\n---\r\n" }, 2, StringSplitOptions.None);
-    if (parts.Length != 2) throw new InvalidOperationException($"Invalid front matter: {path}");
+    var text = File.ReadAllText(path).Replace("\r\n", "\n");
+    if (!text.StartsWith("---\n", StringComparison.Ordinal))
+        throw new InvalidOperationException($"Missing front matter: {path}");
+
+    var end = text.IndexOf("\n---\n", 4, StringComparison.Ordinal);
+    if (end < 0) throw new InvalidOperationException($"Invalid front matter: {path}");
+
+    var frontMatter = text[4..end];
+    var body = text[(end + 5)..].Trim();
     var meta = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-    foreach (var line in parts[0].Split('\n').Skip(1))
+
+    foreach (var line in frontMatter.Split('\n'))
     {
         var i = line.IndexOf(':');
         if (i > 0) meta[line[..i].Trim()] = line[(i + 1)..].Trim().Trim('"', '\'');
     }
-    string Get(string key) => meta.TryGetValue(key, out var value) ? value : throw new InvalidOperationException($"Missing {key}: {path}");
+
+    string Get(string key) => meta.TryGetValue(key, out var value)
+        ? value
+        : throw new InvalidOperationException($"Missing {key}: {path}");
+
     var tags = meta.TryGetValue("tags", out var tagValue)
         ? tagValue.Trim('[', ']').Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(x => x.Trim('"', '\'')).ToArray()
         : Array.Empty<string>();
-    var body = StripMarkdown(parts[1].Trim());
-    return new ContentRecord(Get("kind"), Get("title"), Get("slug"), Get("summary"), DateOnly.Parse(Get("published")), tags, body);
+
+    return new ContentRecord(
+        Get("kind"),
+        Get("title"),
+        Get("slug"),
+        Get("summary"),
+        DateOnly.Parse(Get("published")),
+        tags,
+        StripMarkdown(body));
 }
 
-static string StripMarkdown(string source)
-{
-    return source
-        .Replace("```mermaid", "")
-        .Replace("```", "")
-        .Replace("**", "")
-        .Replace("__", "")
-        .Trim();
-}
+static string StripMarkdown(string source) => source
+    .Replace("```mermaid", "", StringComparison.Ordinal)
+    .Replace("```", "", StringComparison.Ordinal)
+    .Replace("**", "", StringComparison.Ordinal)
+    .Replace("__", "", StringComparison.Ordinal)
+    .Trim();
 
-static void WriteStaticContentPages(string publicRoot, IEnumerable<ContentRecord> items, VersionInfo version)
+static void WriteStaticContentPages(string publicRoot, IEnumerable<ContentRecord> items, RuntimeVersion runtime)
 {
     foreach (var item in items)
     {
         var dir = Path.Combine(publicRoot, "content", item.Slug);
         Directory.CreateDirectory(dir);
         var canonical = $"https://chicodotnet.github.io/content/{item.Slug}/";
-        var type = item.Kind == "video" ? "VideoObject" : "TechArticle";
+        var schemaType = item.Kind == "video" ? "VideoObject" : "TechArticle";
         var tags = string.Join(", ", item.Tags);
+        var tagHtml = string.Join("", item.Tags.Select(t => $"<span class=\"badge\">{WebUtility.HtmlEncode(t)}</span>"));
+        var schema = JsonSerializer.Serialize(new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = schemaType,
+            ["headline"] = item.Title,
+            ["description"] = item.Summary,
+            ["datePublished"] = item.Published.ToString("yyyy-MM-dd"),
+            ["author"] = new Dictionary<string, string>
+            {
+                ["@type"] = "Person",
+                ["name"] = "Alfonso Lara Ramos",
+                ["url"] = "https://chicodotnet.github.io/"
+            }
+        });
+
         var html = $$"""
 <!doctype html>
 <html lang="es">
@@ -89,15 +141,15 @@ static void WriteStaticContentPages(string publicRoot, IEnumerable<ContentRecord
   <meta name="description" content="{{WebUtility.HtmlEncode(item.Summary)}}">
   <meta name="keywords" content="{{WebUtility.HtmlEncode(tags)}}">
   <link rel="canonical" href="{{canonical}}">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"{{type}}","headline":{{JsonSerializer.Serialize(item.Title)}},"description":{{JsonSerializer.Serialize(item.Summary)}},"datePublished":"{{item.Published:yyyy-MM-dd}}","author":{"@type":"Person","name":"Alfonso Lara Ramos","url":"https://chicodotnet.github.io/"}}</script>
+  <script type="application/ld+json">{{schema}}</script>
   <style>body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;max-width:780px;margin:0 auto;padding:48px 24px;color:#172033;line-height:1.65}a{color:#273cbe}.meta{color:#667085}.badge{display:inline-block;padding:4px 8px;border:1px solid #d0d5dd;border-radius:999px;margin:0 6px 6px 0}</style>
 </head>
 <body>
   <p><a href="/">← ChicoDotNet</a></p>
   <h1>{{WebUtility.HtmlEncode(item.Title)}}</h1>
-  <p class="meta">{{item.Kind}} · {{item.Published:yyyy-MM-dd}} · v{{WebUtility.HtmlEncode(version.Version)}}</p>
+  <p class="meta">{{item.Kind}} · {{item.Published:yyyy-MM-dd}} · v{{WebUtility.HtmlEncode(runtime.Version)}}</p>
   <p>{{WebUtility.HtmlEncode(item.Summary)}}</p>
-  <div>{{string.Join("", item.Tags.Select(t => $"<span class=\"badge\">{WebUtility.HtmlEncode(t)}</span>"))}}</div>
+  <div>{{tagHtml}}</div>
   <hr>
   <pre style="white-space:pre-wrap;font:inherit">{{WebUtility.HtmlEncode(item.Body)}}</pre>
 </body>
@@ -123,7 +175,10 @@ static string BuildRss(IEnumerable<ContentRecord> items) => new XDocument(
 static string BuildAtom(IEnumerable<ContentRecord> items)
 {
     XNamespace a = "http://www.w3.org/2005/Atom";
-    var updated = items.Any() ? items.Max(x => x.Published).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc).ToString("O") : DateTime.UnixEpoch.ToString("O");
+    var updated = items.Any()
+        ? items.Max(x => x.Published).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc).ToString("O")
+        : DateTime.UnixEpoch.ToString("O");
+
     return new XDocument(new XElement(a + "feed",
         new XElement(a + "title", "ChicoDotNet"),
         new XElement(a + "id", "https://chicodotnet.github.io/"),
@@ -145,15 +200,17 @@ static string BuildSitemap(IEnumerable<ContentRecord> items)
             new XElement(ns + "lastmod", x.Published.ToString("yyyy-MM-dd")))))).ToString();
 }
 
-static string BuildLlms(IEnumerable<ContentRecord> items, VersionInfo version)
+static string BuildLlms(IEnumerable<ContentRecord> items, RuntimeVersion runtime)
 {
     var sb = new StringBuilder();
     sb.AppendLine("# ChicoDotNet");
-    sb.AppendLine($"> Public engineering home for Alfonso Lara Ramos. Release v{version.Version}.");
+    sb.AppendLine($"> Public engineering home for Alfonso Lara Ramos. Release v{runtime.Version}.");
     sb.AppendLine();
-    foreach (var item in items) sb.AppendLine($"- [{item.Kind}] [{item.Title}](https://chicodotnet.github.io/content/{item.Slug}/): {item.Summary}");
+    foreach (var item in items)
+        sb.AppendLine($"- [{item.Kind}] [{item.Title}](https://chicodotnet.github.io/content/{item.Slug}/): {item.Summary}");
     return sb.ToString();
 }
 
 record ContentRecord(string Kind, string Title, string Slug, string Summary, DateOnly Published, string[] Tags, string Body);
-record VersionInfo(string Version, string ReleaseDate, string Channel);
+record BaseVersion(string Version);
+record RuntimeVersion(string Version, string BaseVersion, string ReleaseDateUtc, int Build, string Channel, string? CommitSha, string GeneratedUtc);
