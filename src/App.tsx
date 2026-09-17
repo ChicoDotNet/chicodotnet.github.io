@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Badge, Button, Card, CardFooter, CardHeader, FluentProvider, webLightTheme } from '@fluentui/react-components';
-import heroCover from '../assets/brand/hero/chicodotnet-readme-cover.jpg';
+import heroCover from '../assets/brand/hero/chicodotnet-hero-cover.png';
 import { contentByKind } from './lib/content';
 import { getCopy, isLocale, type Locale } from './i18n';
+import { projectCardCoverUrl, projectCatalog } from './projectCatalog';
 import { uiLabels } from './uiLabels';
 import { MarkdownContent } from './components/MarkdownContent';
 import { SiteFooter } from './components/SiteFooter';
@@ -13,6 +14,14 @@ const articles = contentByKind('article');
 const diagrams = contentByKind('diagram');
 const videos = contentByKind('video');
 const localeStorageKey = 'chicodotnet.locale';
+const ferrumweave = projectCatalog.ferrumweave;
+const sifras = projectCatalog.sifras;
+const ferrumweaveCardCover = projectCardCoverUrl(ferrumweave);
+const sifrasCardCover = projectCardCoverUrl(sifras);
+
+function projectCoverStyle(url?: string) {
+  return url ? { backgroundImage: `url("${url}")` } : undefined;
+}
 
 function initialLocale(): Locale {
   try {
@@ -121,8 +130,8 @@ export function App() {
             <img
               className="hero-backdrop"
               src={heroCover}
-              width="420"
-              height="335"
+              width="1672"
+              height="941"
               alt=""
               aria-hidden="true"
               fetchPriority="high"
@@ -174,24 +183,36 @@ export function App() {
               />
               <div className="row g-4">
                 <div className="col-12 col-lg-6">
-                  <Card className="project-card project-card-ferrum h-100">
+                  <Card
+                    className="project-card project-card-ferrum h-100"
+                    style={projectCoverStyle(ferrumweaveCardCover)}
+                    data-asset-access={ferrumweave.assets.access}
+                  >
                     <div className="project-card-overlay" />
                     <div className="project-card-content">
                       <Badge appearance="filled" color="brand">{u.openSource}</Badge>
-                      <CardHeader header={<h3 className="project-title">FerrumWeave</h3>} description={<span className="project-kicker">{t.ferrumDescription}</span>} />
+                      <CardHeader header={<h3 className="project-title">{ferrumweave.name}</h3>} description={<span className="project-kicker">{t.ferrumDescription}</span>} />
                       <p>{t.ferrumBody}</p>
-                      <CardFooter><Button appearance="primary" as="a" href="/FerrumWeave/">{t.ferrumCta}</Button></CardFooter>
+                      <CardFooter><Button appearance="primary" as="a" href={ferrumweave.publicSiteUrl}>{t.ferrumCta}</Button></CardFooter>
                     </div>
                   </Card>
                 </div>
                 <div className="col-12 col-lg-6">
-                  <Card className="project-card project-card-sifras h-100">
+                  <Card
+                    className="project-card project-card-sifras h-100"
+                    style={projectCoverStyle(sifrasCardCover)}
+                    data-asset-access={sifras.assets.access}
+                  >
                     <div className="project-card-overlay" />
                     <div className="project-card-content">
                       <Badge appearance="filled" color="success">{u.building}</Badge>
-                      <CardHeader header={<h3 className="project-title">SIFRAS</h3>} description={<span className="project-kicker">{t.sifrasDescription}</span>} />
+                      <CardHeader header={<h3 className="project-title">{sifras.name}</h3>} description={<span className="project-kicker">{t.sifrasDescription}</span>} />
                       <p>{t.sifrasBody}</p>
-                      <CardFooter><Button appearance="outline" disabled>{t.sifrasCta}</Button></CardFooter>
+                      <CardFooter>
+                        {sifras.publicSiteUrl
+                          ? <Button appearance="outline" as="a" href={sifras.publicSiteUrl}>{t.sifrasCta}</Button>
+                          : <Button appearance="outline" disabled>{t.sifrasCta}</Button>}
+                      </CardFooter>
                     </div>
                   </Card>
                 </div>
