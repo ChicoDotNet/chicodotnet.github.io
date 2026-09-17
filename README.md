@@ -1,5 +1,7 @@
 # ChicoDotNet User Page
 
+![ChicoDotNet bridge cover](assets/brand/hero/chicodotnet-readme-cover.jpg)
+
 Public engineering home for **ChicoDotNet**, deployed at `https://chicodotnet.github.io/`.
 
 ## Stack
@@ -18,6 +20,24 @@ Spanish is canonical. The interface also supports the same locale set as FerrumW
 `es`, `en`, `de`, `fr`, `it`, `pt-BR`, `ru`, `zh-Hans`, `ja`.
 
 Editorial content may temporarily fall back to Spanish while translations are produced.
+
+## Brand asset convention
+
+Each project owns its visual identity. Repository-level documentation assets live under:
+
+`assets/brand/hero/`
+
+The preferred README/card cover convention is:
+
+`<project>-readme-cover.<ext>`
+
+Examples:
+
+- ChicoDotNet: `assets/brand/hero/chicodotnet-readme-cover.jpg`;
+- FerrumWeave: `assets/brand/hero/ferrumweave-readme-cover.png` in the FerrumWeave repository;
+- SIFRAS will adopt the same structure when its public documentation surface is created.
+
+The ChicoDotNet User Page should consume project-owned covers rather than fork them into this repository. That keeps branding versioned with the project that owns it.
 
 ## Versioning
 
