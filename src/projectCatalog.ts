@@ -1,5 +1,6 @@
 export type ProjectAssetAccess = 'public' | 'private';
 export type ProjectCoverKind = 'readme' | 'hero';
+export type ProjectKey = 'ferrumweave' | 'sifras';
 
 export type ProjectBrandAssets = {
   access: ProjectAssetAccess;
@@ -17,7 +18,7 @@ export type ProjectDefinition = {
   assets: ProjectBrandAssets;
 };
 
-export const projectCatalog = {
+export const projectCatalog: Record<ProjectKey, ProjectDefinition> = {
   ferrumweave: {
     name: 'FerrumWeave',
     repository: 'ChicoDotNet/FerrumWeave',
@@ -46,7 +47,7 @@ export const projectCatalog = {
       cardCover: 'hero',
     },
   },
-} satisfies Record<string, ProjectDefinition>;
+};
 
 export function projectAssetUrl(project: ProjectDefinition, kind: ProjectCoverKind): string | undefined {
   if (project.assets.access !== 'public') return undefined;
