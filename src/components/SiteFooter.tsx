@@ -62,6 +62,9 @@ export function SiteFooter() {
           <SocialLink href="https://www.linkedin.com/in/alfonsolara/" label="LinkedIn">
             <svg {...iconProps}><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM2.8 9.8h4.36V22H2.8V9.8Zm6.93 0h4.18v1.67h.06c.58-1.1 2-2.26 4.12-2.26 4.4 0 5.21 2.9 5.21 6.66V22h-4.35v-5.43c0-1.3-.02-2.96-1.8-2.96-1.81 0-2.09 1.41-2.09 2.86V22H9.73V9.8Z"/></svg>
           </SocialLink>
+          <SocialLink href="https://www.youtube.com/@arquitectodesoluciones" label="YouTube">
+            <svg {...iconProps}><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z"/></svg>
+          </SocialLink>
           <SocialLink href="mailto:chicodotnet@outlook.com" label="Email">
             <svg {...iconProps} fill="none"><path d="M3 5.5h18v13H3v-13Z" stroke="currentColor" strokeWidth="1.8"/><path d="m4 7 8 6 8-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </SocialLink>
