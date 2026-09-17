@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Button, Card, CardFooter, CardHeader, FluentProvider, webLightTheme } from '@fluentui/react-components';
 import { contentByKind } from './lib/content';
 import { MarkdownContent } from './components/MarkdownContent';
@@ -27,7 +28,7 @@ function ContentCard({ item }: { item: ReturnType<typeof contentByKind>[number] 
   );
 }
 
-function Section({ id, eyebrow, title, children }: { id: string; eyebrow: string; title: string; children: React.ReactNode }) {
+function Section({ id, eyebrow, title, children }: { id: string; eyebrow: string; title: string; children: ReactNode }) {
   return (
     <section id={id} className="section-space">
       <div className="container">
