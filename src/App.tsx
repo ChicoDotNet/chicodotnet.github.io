@@ -5,6 +5,7 @@ import { contentByKind } from './lib/content';
 import { getCopy, isLocale, type Locale } from './i18n';
 import { projectCardCoverUrl, projectCatalog } from './projectCatalog';
 import { uiLabels } from './uiLabels';
+import { ClosingSection } from './components/ClosingSection';
 import { MarkdownContent } from './components/MarkdownContent';
 import { SiteFooter } from './components/SiteFooter';
 import { SiteHeader } from './components/SiteHeader';
@@ -12,7 +13,6 @@ import './styles.css';
 
 const articles = contentByKind('article');
 const diagrams = contentByKind('diagram');
-const videos = contentByKind('video');
 const localeStorageKey = 'chicodotnet.locale';
 const ferrumweave = projectCatalog.ferrumweave;
 const sifras = projectCatalog.sifras;
@@ -58,12 +58,11 @@ function FactIcon({ index }: { index: number }) {
   return <span className="fact-icon">{icons[index] ?? icons[0]}</span>;
 }
 
-function ContentCard({ item, openLabel, videoLabel }: { item: ReturnType<typeof contentByKind>[number]; openLabel: string; videoLabel: string }) {
+function ContentCard({ item, openLabel }: { item: ReturnType<typeof contentByKind>[number]; openLabel: string }) {
   return (
     <Card className="content-card h-100">
       <CardHeader header={<strong>{item.meta.title}</strong>} description={<span>{item.meta.summary}</span>} />
       <div className="content-card-body">
-        {item.meta.kind === 'video' && <div className="ratio ratio-16x9 video-placeholder mb-3" aria-label={videoLabel}><span>▶ {videoLabel}</span></div>}
         <MarkdownContent markdown={item.body} />
       </div>
       <CardFooter>
@@ -85,17 +84,6 @@ function SectionHeading({ eyebrow, title, action }: { eyebrow: string; title: st
       </div>
       {action}
     </div>
-  );
-}
-
-function Section({ id, eyebrow, title, children }: { id: string; eyebrow: string; title: string; children: ReactNode }) {
-  return (
-    <section id={id} className="section-space anchor-section">
-      <div className="container">
-        <SectionHeading eyebrow={eyebrow} title={title} />
-        {children}
-      </div>
-    </section>
   );
 }
 
@@ -220,43 +208,30 @@ export function App() {
             </div>
           </section>
 
-          <section className="quote-section" aria-label="ChicoDotNet quote">
-            <div className="container">
-              <figure className="quote-card mb-0">
-                <blockquote>“{t.quote}”</blockquote>
-                <figcaption>— ChicoDotNet</figcaption>
-              </figure>
-            </div>
-          </section>
-
           <section className="section-space anchor-section" aria-label="Articles and diagrams">
             <div className="container">
               <div className="row g-5">
                 <section id="writing" className="col-12 col-lg-6 anchor-section">
                   <SectionHeading eyebrow={t.articleEyebrow} title={t.articleTitle} />
-                  <div className="d-grid gap-4">{articles.map((item) => <ContentCard item={item} openLabel={u.open} videoLabel={u.video} key={item.meta.slug} />)}</div>
+                  <div className="d-grid gap-4">{articles.map((item) => <ContentCard item={item} openLabel={u.open} key={item.meta.slug} />)}</div>
                 </section>
                 <section id="diagrams" className="col-12 col-lg-6 anchor-section">
                   <SectionHeading eyebrow={t.diagramEyebrow} title={t.diagramTitle} />
-                  <div className="d-grid gap-4">{diagrams.map((item) => <ContentCard item={item} openLabel={u.open} videoLabel={u.video} key={item.meta.slug} />)}</div>
+                  <div className="d-grid gap-4">{diagrams.map((item) => <ContentCard item={item} openLabel={u.open} key={item.meta.slug} />)}</div>
                 </section>
               </div>
             </div>
           </section>
 
-          <Section id="videos" eyebrow={t.videoEyebrow} title={t.videoTitle}>
-            <div className="row g-4">{videos.map((item) => <div className="col-12 col-lg-6" key={item.meta.slug}><ContentCard item={item} openLabel={u.open} videoLabel={u.video} /></div>)}</div>
-          </Section>
-
-          <section id="contact" className="contact-section anchor-section py-5">
-            <div className="container py-4 text-center">
-              <div className="eyebrow">{t.connectEyebrow}</div>
-              <h2 className="display-5 fw-bold mt-2">{t.connectTitle}</h2>
-              <p className="mx-auto col-lg-7 lead text-secondary">{t.connectBody}</p>
-              <Button appearance="primary" size="large" as="a" href="mailto:chicodotnet@outlook.com">{t.emailCta}</Button>
-              <div className="contact-email mt-3"><a href="mailto:chicodotnet@outlook.com">chicodotnet@outlook.com</a></div>
-            </div>
-          </section>
+          <ClosingSection
+            videoEyebrow={t.videoEyebrow}
+            videoTitle={t.videoTitle}
+            quote={t.quote}
+            connectEyebrow={t.connectEyebrow}
+            connectTitle={t.connectTitle}
+            connectBody={t.connectBody}
+            emailCta={t.emailCta}
+          />
         </main>
 
         <SiteFooter />
