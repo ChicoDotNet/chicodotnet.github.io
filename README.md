@@ -1,6 +1,6 @@
 # ChicoDotNet User Page
 
-![ChicoDotNet bridge cover](assets/brand/hero/chicodotnet-readme-cover.jpg)
+![ChicoDotNet bridge cover](assets/brand/hero/chicodotnet-readme-cover.png)
 
 Public engineering home for **ChicoDotNet**, deployed at `https://chicodotnet.github.io/`.
 
@@ -27,17 +27,21 @@ Each project owns its visual identity. Repository-level documentation assets liv
 
 `assets/brand/hero/`
 
-The preferred README/card cover convention is:
+Each project should provide two complementary PNG surfaces:
 
-`<project>-readme-cover.<ext>`
+```text
+assets/brand/hero/
+├── <project>-readme-cover.png   # branded cover with project identity / lettering
+└── <project>-hero-cover.png     # artwork-only surface for web heroes and cards
+```
 
-Examples:
+Current examples:
 
-- ChicoDotNet: `assets/brand/hero/chicodotnet-readme-cover.jpg`;
-- FerrumWeave: `assets/brand/hero/ferrumweave-readme-cover.png` in the FerrumWeave repository;
-- SIFRAS will adopt the same structure when its public documentation surface is created.
+- ChicoDotNet: `chicodotnet-readme-cover.png` + `chicodotnet-hero-cover.png`;
+- FerrumWeave: `ferrumweave-readme-cover.png`; its hero-only cover will follow the same convention;
+- SIFRAS: `sifras-readme-cover.png` + `sifras-hero-cover.png` already live in `ChicoDotNet/Sifras` on `dev`.
 
-The ChicoDotNet User Page should consume project-owned covers rather than fork them into this repository. That keeps branding versioned with the project that owns it.
+The ChicoDotNet User Page should consume project-owned covers rather than fork them into this repository. `src/projectCatalog.ts` is the single UI contract for repository URLs, branches, cover paths and asset visibility. SIFRAS currently remains private, so the public page intentionally uses its CSS fallback until that asset becomes anonymously reachable; no private GitHub URL is leaked into the public runtime.
 
 ## Versioning
 
