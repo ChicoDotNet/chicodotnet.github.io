@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Badge, Button, Card, CardFooter, CardHeader, FluentProvider, webLightTheme } from '@fluentui/react-components';
-import heroCover from '../assets/brand/hero/chicodotnet-readme-cover.png';
+import heroCover from '../assets/brand/hero/chicodotnet-readme-cover.jpg';
 import { contentByKind } from './lib/content';
 import { getCopy, isLocale, type Locale } from './i18n';
 import { uiLabels } from './uiLabels';
@@ -121,8 +121,8 @@ export function App() {
             <img
               className="hero-backdrop"
               src={heroCover}
-              width="1200"
-              height="867"
+              width="420"
+              height="335"
               alt=""
               aria-hidden="true"
               fetchPriority="high"
@@ -136,7 +136,7 @@ export function App() {
                   <p className="hero-copy mb-0">{t.heroBody}</p>
                   <div className="d-flex flex-wrap gap-3 mt-4">
                     <Button appearance="primary" size="large" as="a" href="#projects">{t.explore}</Button>
-                    <Button appearance="outline" size="large" as="a" href="#writing">{t.read}</Button>
+                    <Button className="hero-secondary-button" appearance="outline" size="large" as="a" href="#writing">{t.read}</Button>
                   </div>
                 </div>
                 <div className="d-none d-lg-flex col-lg-5 col-xl-6 justify-content-end align-self-start pt-4">
