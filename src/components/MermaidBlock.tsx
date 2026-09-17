@@ -1,7 +1,15 @@
 import { useEffect, useId, useState } from 'react';
-import mermaid from 'mermaid';
 
-mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'strict' });
+let mermaidInitialized = false;
+
+async function renderMermaid(id: string, chart: string) {
+  const { default: mermaid } = await import('mermaid');
+  if (!mermaidInitialized) {
+    mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'strict' });
+    mermaidInitialized = true;
+  }
+  return mermaid.render(id, chart);
+}
 
 export function MermaidBlock({ chart }: { chart: string }) {
   const reactId = useId();
@@ -10,9 +18,14 @@ export function MermaidBlock({ chart }: { chart: string }) {
 
   useEffect(() => {
     let active = true;
-    mermaid.render(safeId, chart).then(({ svg: rendered }) => {
-      if (active) setSvg(rendered);
-    });
+    renderMermaid(safeId, chart)
+      .then(({ svg: rendered }) => {
+        if (active) setSvg(rendered);
+      })
+      .catch(() => {
+        if (active) setSvg('<p role="alert">No fue posible renderizar este diagrama.</p>');
+      });
+
     return () => { active = false; };
   }, [chart, safeId]);
 

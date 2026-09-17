@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
-import { Button, Card, CardFooter, CardHeader, FluentProvider, webLightTheme } from '@fluentui/react-components';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Badge, Button, Card, CardFooter, CardHeader, FluentProvider, webLightTheme } from '@fluentui/react-components';
 import { contentByKind } from './lib/content';
+import { getCopy, isLocale, type Locale } from './i18n';
 import { MarkdownContent } from './components/MarkdownContent';
 import { SiteFooter } from './components/SiteFooter';
 import { SiteHeader } from './components/SiteHeader';
@@ -9,13 +10,28 @@ import './styles.css';
 const articles = contentByKind('article');
 const diagrams = contentByKind('diagram');
 const videos = contentByKind('video');
+const localeStorageKey = 'chicodotnet.locale';
+
+function initialLocale(): Locale {
+  const requested = new URLSearchParams(window.location.search).get('lang');
+  if (isLocale(requested)) return requested;
+
+  try {
+    const stored = window.localStorage.getItem(localeStorageKey);
+    if (isLocale(stored)) return stored;
+  } catch {
+    // Storage can be unavailable in privacy-restricted browser contexts.
+  }
+
+  return 'es';
+}
 
 function ContentCard({ item }: { item: ReturnType<typeof contentByKind>[number] }) {
   return (
     <Card className="content-card h-100">
       <CardHeader header={<strong>{item.meta.title}</strong>} description={<span>{item.meta.summary}</span>} />
       <div className="content-card-body">
-        {item.meta.kind === 'video' && <div className="ratio ratio-16x9 video-placeholder mb-3"><span>Video placeholder</span></div>}
+        {item.meta.kind === 'video' && <div className="ratio ratio-16x9 video-placeholder mb-3" aria-label="Video placeholder"><span>▶ Video</span></div>}
         <MarkdownContent markdown={item.body} />
       </div>
       <CardFooter>
@@ -28,11 +44,20 @@ function ContentCard({ item }: { item: ReturnType<typeof contentByKind>[number] 
   );
 }
 
+function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
+  return (
+    <div className="section-heading mb-4">
+      <div className="eyebrow">{eyebrow}</div>
+      <h2 className="display-6 fw-bold mb-0">{title}</h2>
+    </div>
+  );
+}
+
 function Section({ id, eyebrow, title, children }: { id: string; eyebrow: string; title: string; children: ReactNode }) {
   return (
-    <section id={id} className="section-space">
+    <section id={id} className="section-space anchor-section">
       <div className="container">
-        <div className="mb-4"><div className="eyebrow">{eyebrow}</div><h2 className="display-6 fw-bold">{title}</h2></div>
+        <SectionHeading eyebrow={eyebrow} title={title} />
         {children}
       </div>
     </section>
@@ -40,56 +65,148 @@ function Section({ id, eyebrow, title, children }: { id: string; eyebrow: string
 }
 
 export function App() {
+  const [locale, setLocale] = useState<Locale>(initialLocale);
+  const t = getCopy(locale);
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+    try {
+      window.localStorage.setItem(localeStorageKey, locale);
+    } catch {
+      // Keep language selection functional even when storage is blocked.
+    }
+
+    const url = new URL(window.location.href);
+    if (locale === 'es') url.searchParams.delete('lang');
+    else url.searchParams.set('lang', locale);
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  }, [locale]);
+
   return (
     <FluentProvider theme={webLightTheme}>
       <div id="top" className="app-shell">
-        <SiteHeader />
+        <SiteHeader locale={locale} onLocaleChange={setLocale} labels={{
+          language: t.language,
+          projects: t.projects,
+          articles: t.articles,
+          diagrams: t.diagrams,
+          videos: t.videos,
+          contact: t.contact,
+        }} />
+
         <main>
-          <section className="hero d-flex align-items-center">
-            <div className="container py-5">
-              <div className="row align-items-center g-5">
-                <div className="col-12 col-lg-7">
-                  <div className="eyebrow text-info">Software architecture · .NET · Rust · AI · Open Source</div>
-                  <h1 className="display-2 fw-bold text-white mt-3">Construyendo puentes entre ideas, personas y tecnología.</h1>
-                  <p className="lead text-white-50 col-lg-10">Soy Alfonso Lara Ramos. Diseño sistemas, escribo software y documento lo que aprendo al explorar runtimes, interoperabilidad y arquitectura empresarial.</p>
+          <section className="hero" aria-labelledby="hero-title">
+            <div className="container hero-inner py-5">
+              <div className="row align-items-center g-5 py-lg-5">
+                <div className="col-12 col-lg-6">
+                  <div className="eyebrow hero-eyebrow">{t.heroEyebrow}</div>
+                  <h1 id="hero-title" className="hero-title mt-3 mb-3">{t.heroTitle}</h1>
+                  <p className="hero-copy mb-0">{t.heroBody}</p>
                   <div className="d-flex flex-wrap gap-3 mt-4">
-                    <Button appearance="primary" size="large" as="a" href="#projects">Explorar proyectos</Button>
-                    <Button appearance="outline" size="large" as="a" href="#writing">Leer artículos</Button>
+                    <Button appearance="primary" size="large" as="a" href="#projects">{t.explore}</Button>
+                    <Button appearance="outline" size="large" as="a" href="#writing">{t.read}</Button>
                   </div>
                 </div>
-                <div className="col-12 col-lg-5"><img src="/media/hero-bridge.svg" className="img-fluid hero-art" alt="Puente conceptual entre .NET, Rust, nube e inteligencia artificial" /></div>
+                <div className="col-12 col-lg-6">
+                  <div className="hero-image-shell">
+                    <img
+                      src="/media/hero-bridge.png"
+                      width="1200"
+                      height="867"
+                      className="img-fluid hero-art"
+                      alt="Puente conceptual entre .NET, Rust e inteligencia artificial"
+                      fetchPriority="high"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </section>
 
-          <Section id="projects" eyebrow="Featured work" title="Proyectos que convierten ideas difíciles en sistemas verificables">
+          <section className="facts-strip" aria-label="ChicoDotNet facts">
+            <div className="container">
+              <div className="row g-0">
+                {t.facts.map((fact, index) => {
+                  const [headline, ...rest] = fact.split(' ');
+                  return (
+                    <div className="col-6 col-lg-3" key={fact}>
+                      <div className={`fact-item ${index > 0 ? 'fact-bordered' : ''}`}>
+                        <strong>{headline}</strong>
+                        <span>{rest.join(' ')}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          <Section id="projects" eyebrow={t.projectsEyebrow} title={t.projectsTitle}>
             <div className="row g-4">
-              <div className="col-12 col-lg-6"><Card className="project-card h-100"><CardHeader header={<h3>FerrumWeave</h3>} description="Bringing Rust into the .NET ecosystem." /><p>Rust → CIL, CTS interoperability, MSBuild y una experiencia .NET que no obligue a reescribir lo que ya funciona.</p><CardFooter><Button appearance="primary" as="a" href="/FerrumWeave/">Explorar FerrumWeave</Button></CardFooter></Card></div>
-              <div className="col-12 col-lg-6"><Card className="project-card h-100"><CardHeader header={<h3>SIFRAS</h3>} description="Fiscal intelligence with local-first credential handling." /><p>Placeholder preparado para la próxima página pública: arquitectura, seguridad, delegación y automatización fiscal.</p><CardFooter><Button appearance="outline" disabled>Próximamente</Button></CardFooter></Card></div>
+              <div className="col-12 col-lg-6">
+                <Card className="project-card project-card-ferrum h-100">
+                  <div className="project-card-overlay" />
+                  <div className="project-card-content">
+                    <Badge appearance="filled" color="brand">Open source</Badge>
+                    <CardHeader header={<h3 className="project-title">FerrumWeave</h3>} description={<span className="project-kicker">{t.ferrumDescription}</span>} />
+                    <p>{t.ferrumBody}</p>
+                    <CardFooter><Button appearance="primary" as="a" href="/FerrumWeave/">{t.ferrumCta}</Button></CardFooter>
+                  </div>
+                </Card>
+              </div>
+              <div className="col-12 col-lg-6">
+                <Card className="project-card project-card-sifras h-100">
+                  <div className="project-card-overlay" />
+                  <div className="project-card-content">
+                    <Badge appearance="filled" color="success">En construcción</Badge>
+                    <CardHeader header={<h3 className="project-title">SIFRAS</h3>} description={<span className="project-kicker">{t.sifrasDescription}</span>} />
+                    <p>{t.sifrasBody}</p>
+                    <CardFooter><Button appearance="outline" disabled>{t.sifrasCta}</Button></CardFooter>
+                  </div>
+                </Card>
+              </div>
             </div>
           </Section>
 
-          <Section id="writing" eyebrow="Writing" title="Artículos y notas técnicas">
-            <div className="row g-4">{articles.map((item) => <div className="col-12 col-lg-6" key={item.meta.slug}><ContentCard item={item} /></div>)}</div>
-          </Section>
+          <section className="quote-section" aria-label="ChicoDotNet quote">
+            <div className="container">
+              <figure className="quote-card mb-0">
+                <blockquote>“{t.quote}”</blockquote>
+                <figcaption>— ChicoDotNet</figcaption>
+              </figure>
+            </div>
+          </section>
 
-          <Section id="diagrams" eyebrow="Diagrams" title="Arquitectura que se puede leer, versionar y discutir">
-            <div className="row g-4">{diagrams.map((item) => <div className="col-12" key={item.meta.slug}><ContentCard item={item} /></div>)}</div>
-          </Section>
+          <section className="section-space anchor-section" aria-label="Articles and diagrams">
+            <div className="container">
+              <div className="row g-5">
+                <section id="writing" className="col-12 col-lg-6 anchor-section">
+                  <SectionHeading eyebrow={t.articleEyebrow} title={t.articleTitle} />
+                  <div className="d-grid gap-4">{articles.map((item) => <ContentCard item={item} key={item.meta.slug} />)}</div>
+                </section>
+                <section id="diagrams" className="col-12 col-lg-6 anchor-section">
+                  <SectionHeading eyebrow={t.diagramEyebrow} title={t.diagramTitle} />
+                  <div className="d-grid gap-4">{diagrams.map((item) => <ContentCard item={item} key={item.meta.slug} />)}</div>
+                </section>
+              </div>
+            </div>
+          </section>
 
-          <Section id="videos" eyebrow="Watch & learn" title="Videos, demos y explicaciones visuales">
+          <Section id="videos" eyebrow={t.videoEyebrow} title={t.videoTitle}>
             <div className="row g-4">{videos.map((item) => <div className="col-12 col-lg-6" key={item.meta.slug}><ContentCard item={item} /></div>)}</div>
           </Section>
 
-          <section id="contact" className="contact-section py-5">
+          <section id="contact" className="contact-section anchor-section py-5">
             <div className="container py-4 text-center">
-              <div className="eyebrow">Open-source contactor</div>
-              <h2 className="display-6 fw-bold">¿Construimos algo que valga la pena?</h2>
-              <p className="mx-auto col-lg-7">El formulario llegará en una siguiente iteración como mini proyecto reusable y multi-cloud. Por ahora esta superficie queda preparada sin acoplar el sitio a un backend.</p>
-              <Button appearance="primary" as="a" href="https://github.com/ChicoDotNet">GitHub</Button>
+              <div className="eyebrow">{t.connectEyebrow}</div>
+              <h2 className="display-5 fw-bold mt-2">{t.connectTitle}</h2>
+              <p className="mx-auto col-lg-7 lead text-secondary">{t.connectBody}</p>
+              <Button appearance="primary" size="large" as="a" href="mailto:chicodotnet@outlook.com">{t.emailCta}</Button>
+              <div className="contact-email mt-3"><a href="mailto:chicodotnet@outlook.com">chicodotnet@outlook.com</a></div>
             </div>
           </section>
         </main>
+
         <SiteFooter />
       </div>
     </FluentProvider>

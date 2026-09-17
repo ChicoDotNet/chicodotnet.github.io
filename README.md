@@ -1,6 +1,6 @@
 # ChicoDotNet User Page
 
-Public engineering home for Alfonso Lara Ramos / ChicoDotNet, deployed at `https://chicodotnet.github.io/`.
+Public engineering home for **ChicoDotNet**, deployed at `https://chicodotnet.github.io/`.
 
 ## Stack
 
@@ -10,6 +10,14 @@ Public engineering home for Alfonso Lara Ramos / ChicoDotNet, deployed at `https
 - Markdown + Mermaid for repository-native content;
 - .NET 10 content pipeline for generated indices, RSS/Atom, sitemap, `llms.txt`, static long-tail pages and runtime build evidence;
 - GitHub Pages for static hosting.
+
+## Language policy
+
+Spanish is canonical. The interface also supports the same locale set as FerrumWeave:
+
+`es`, `en`, `de`, `fr`, `it`, `pt-BR`, `ru`, `zh-Hans`, `ja`.
+
+Editorial content may temporarily fall back to Spanish while translations are produced.
 
 ## Versioning
 
@@ -31,6 +39,6 @@ where the date is derived in **UTC** and the build number is generated automatic
 
 ## Content
 
-Repository content lives under `content/` and is directly reviewable in pull requests. The current release includes placeholders for articles, diagrams and videos so external ingestion can be added later without coupling the UI to LinkedIn, YouTube or another provider.
+Repository content lives under `content/` and is directly reviewable in pull requests. Articles, diagrams and videos are content records rather than hard-coded JSX, so external ingestion can be added later without coupling the UI to LinkedIn, YouTube or another provider.
 
 See [`docs/ROADMAP.md`](docs/ROADMAP.md) for Visio compatibility, feed ingestion and the reusable multi-cloud contactor.
